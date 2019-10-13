@@ -1,0 +1,49 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'antlr'
+
+// Setting project to use JDK 12
+sourceCompatibility = 1.12
+targetCompatibility = 1.12
+
+
+//Server where we get the plugins
+
+repositories {
+        mavenCentral()
+    }
+
+// Project dependencies, set antlr 4.7.1
+dependencies {
+    antlr "org.antlr:antlr4:4.7.1"
+    compile "org.antlr:antlr4-runtime:4.7.1"
+    testCompile 'junit:junit:4.12'
+}
+
+
+
+//Task to generate source code from antlr grammars, and package them in the mylanguage package.
+generateGrammarSource {
+    source("src/main/antlr".toString())
+    maxHeapSize = "64m"
+    arguments += ['-visitor','-package', 'mylanguage']
+    outputDirectory = new File("generated-src/antlr/main/mylanguage".toString())
+}
+
+compileJava.dependsOn generateGrammarSource
+
+//Now we connect the generated sources with the main source code.
+sourceSets {
+    generated {
+        java.srcDir 'generated-src/antlr/main/'
+    }
+    main.java.srcDirs += 'generated-src/antlr/main/'
+}
+
+compileGeneratedJava.source sourceSets.generated.java
+compileJava.source sourceSets.main.java
+
+clean{
+    delete "generated-src"
+}
+
